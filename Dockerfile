@@ -1,18 +1,46 @@
-FROM gcr.io/cloudshell-images/cloudshell:latest
+FROM ubuntu:18.04
 
-RUN curl https://raw.githubusercontent.com/helm/helm/master/scripts/get > get_helm.sh \
-    && chmod 700 get_helm.sh \ 
-    && ./get_helm.sh \
-    && rm ./get_helm.sh \
-    && curl -L https://github.com/kubernetes/kompose/releases/download/v1.17.0/kompose-linux-amd64 -o kompose \ 
-    && chmod +x kompose \ 
-    && sudo mv ./kompose /usr/local/bin/kompose
-# Add your content here
+RUN apt-get update -y && \
+    apt-get -y install \
+    locales \
+    sudo \
+    procps \
+    wget \
+    unzip \
+    ca-certificates \
+    curl \
+    software-properties-common \
+    bash-completion \
+    vim \
+    git && \
+    echo "%sudo ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers && \
+    useradd -u 1000 -G users,sudo,root -d /home/user --shell /bin/bash -m user && \
+    usermod -p "*" user && \
+    apt-get -y clean && \
+    rm -rf /var/lib/apt/lists/*
 
-# To trigger a rebuild of your Cloud Shell image:
+# Install kubectl
+RUN apt-get update && \
+    apt-get install -y apt-transport-https && \
+    curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add - && \
+    echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" | tee -a /etc/apt/sources.list.d/kubernetes.list && \
+    apt-get update && \
+    apt-get install -y kubectl && \
+    apt-get -y clean && \
+    rm -rf /var/lib/apt/lists/*
 
-# 1. Commit your changes locally: git commit -a
-# 2. Push your changes upstream: git push origin master
+# Install gcloud
+RUN export CLOUD_SDK_REPO="cloud-sdk-$(lsb_release -c -s)" && \
+    echo "deb http://packages.cloud.google.com/apt $CLOUD_SDK_REPO main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list && \
+    curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add - && \
+    apt-get update -y && apt-get install google-cloud-sdk -y && \
+    apt-get -y clean && \
+    rm -rf /var/lib/apt/lists/*
 
-# This triggers a rebuild of your image hosted at https://gcr.io/sidorov-210003/mycloudshell
-# You can find the Cloud Source Repository hosting this file at https://source.developers.google.com/p/sidorov-210003/r/mycloudshell
+
+# Install helm
+RUN curl https://raw.githubusercontent.com/helm/helm/master/scripts/get | bash
+
+USER user
+WORKDIR /home/user
+CMD sudo chown user:user /home/user && /bin/bash
