@@ -41,6 +41,12 @@ RUN export CLOUD_SDK_REPO="cloud-sdk-$(lsb_release -c -s)" && \
 # Install helm
 RUN curl https://raw.githubusercontent.com/helm/helm/master/scripts/get | bash
 
+# Install kompose
+ENV KOMPOSE_VERSION v1.18.0
+RUN curl -L https://github.com/kubernetes/kompose/releases/download/${KOMPOSE_VERSION}/kompose-linux-amd64 -o kompose && \
+    chmod +x kompose && \
+    mv ./kompose /usr/local/bin/kompose
+
 USER user
 WORKDIR /home/user
 CMD sudo chown user:user /home/user && /bin/bash
